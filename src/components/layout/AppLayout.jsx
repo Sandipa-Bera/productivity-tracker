@@ -60,7 +60,7 @@ export default function AppLayout({ children }) {
         {/* Main content area */}
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto px-5 py-5 pb-20 md:pb-5"
+          className="flex-1 overflow-y-auto px-6 py-6 pb-24 md:px-8 md:py-8 md:pb-8"
         >
           {children}
         </main>

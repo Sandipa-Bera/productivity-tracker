@@ -1,16 +1,13 @@
-/**
- * Card — surface container.
- *
- * @param {{ elevated?: boolean, className?: string } & React.HTMLAttributes<HTMLDivElement>} props
- */
-export default function Card({ elevated = false, className = '', children, ...props }) {
-  const bg = elevated ? 'bg-[var(--color-elevated)]' : 'bg-[var(--color-surface)]'
+export default function Card({
+  children,
+  className = "",
+  elevated = false,
+}) {
   return (
     <div
-      className={`rounded-lg border border-[var(--color-border)] ${bg} ${className}`}
-      {...props}
+      className={`${elevated ? "app-card-elevated" : "app-card"} ${className}`}
     >
       {children}
     </div>
-  )
+  );
 }

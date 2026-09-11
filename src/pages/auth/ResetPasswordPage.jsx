@@ -2,16 +2,13 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 
-export default function SignupPage() {
+export default function ResetPasswordPage() {
   const navigate = useNavigate()
-  const { signUp } = useAuth()
+  const { updatePassword, user } = useAuth()
   
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
     password: '',
     confirmPassword: '',
   })
@@ -21,19 +18,12 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [success, setSuccess] = useState(false)
+  
+  // Check if we have a valid session (user should be authenticated via the reset link)
+  const isValidSession = !!user
 
   const validateForm = () => {
     const newErrors = {}
-    
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required'
-    }
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required'
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address'
-    }
     
     if (!formData.password) {
       newErrors.password = 'Password is required'
@@ -59,32 +49,16 @@ export default function SignupPage() {
     setLoading(true)
     setSubmitError('')
     
-    const { data, error } = await signUp(
-      formData.email,
-      formData.password,
-      {
-        data: {
-          full_name: formData.fullName,
-        },
-      }
-    )
+    const { error } = await updatePassword(formData.password)
     
     if (error) {
-      if (error.message.includes('User already registered')) {
-        setSubmitError('An account with this email already exists')
-      } else if (error.message.includes('Password')) {
-        setSubmitError('Password is too weak. Please use a stronger password.')
+      if (error.message.includes('Auth session missing')) {
+        setSubmitError('Invalid or expired reset link. Please request a new password reset.')
       } else {
         setSubmitError('An error occurred. Please try again.')
       }
     } else {
-      // Check if email confirmation is required
-      if (data.user && !data.session) {
-        setSuccess(true)
-      } else if (data.session) {
-        // Auto-confirmed, redirect to dashboard
-        navigate('/dashboard')
-      }
+      setSuccess(true)
     }
     
     setLoading(false)
@@ -101,6 +75,45 @@ export default function SignupPage() {
     }
   }
 
+  if (!isValidSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-[var(--color-danger)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[var(--color-danger)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-semibold text-[var(--color-text)] mb-2">
+                Invalid reset link
+              </h1>
+              <p className="text-sm text-[var(--color-muted)]">
+                This password reset link is invalid or has expired. Please request a new one.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Button
+                onClick={() => navigate('/forgot-password')}
+                className="w-full"
+              >
+                Request new reset link
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => navigate('/login')}
+                className="w-full"
+              >
+                Back to login
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
@@ -113,19 +126,17 @@ export default function SignupPage() {
                 </svg>
               </div>
               <h1 className="text-2xl font-semibold text-[var(--color-text)] mb-2">
-                Check your email
+                Password updated
               </h1>
               <p className="text-sm text-[var(--color-muted)]">
-                We've sent a confirmation link to <span className="text-[var(--color-text)]">{formData.email}</span>.
-                Please check your inbox and click the link to activate your account.
+                Your password has been successfully updated. You can now log in with your new password.
               </p>
             </div>
             <Button
-              variant="secondary"
               onClick={() => navigate('/login')}
               className="w-full"
             >
-              Back to login
+              Go to login
             </Button>
           </div>
         </div>
@@ -139,10 +150,10 @@ export default function SignupPage() {
         <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-semibold text-[var(--color-text)] mb-2">
-              Create account
+              Set new password
             </h1>
             <p className="text-sm text-[var(--color-muted)]">
-              Set up your productivity workspace
+              Enter your new password below
             </p>
           </div>
 
@@ -153,35 +164,9 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Full name"
-              id="fullName"
-              name="fullName"
-              type="text"
-              value={formData.fullName}
-              onChange={handleChange}
-              error={errors.fullName}
-              placeholder="John Doe"
-              autoComplete="name"
-              disabled={loading}
-            />
-
-            <Input
-              label="Email"
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              placeholder="you@example.com"
-              autoComplete="email"
-              disabled={loading}
-            />
-
             <div className="space-y-1.5">
               <label htmlFor="password" className="block text-sm font-medium text-[var(--color-text)]">
-                Password
+                New password
               </label>
               <div className="relative">
                 <input
@@ -221,7 +206,7 @@ export default function SignupPage() {
 
             <div className="space-y-1.5">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--color-text)]">
-                Confirm password
+                Confirm new password
               </label>
               <div className="relative">
                 <input
@@ -264,20 +249,17 @@ export default function SignupPage() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? 'Updating...' : 'Update password'}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-[var(--color-muted)]">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="text-[var(--color-accent)] hover:opacity-80 transition-opacity"
-              >
-                Sign in
-              </Link>
-            </p>
+            <Link
+              to="/login"
+              className="text-sm text-[var(--color-accent)] hover:opacity-80 transition-opacity"
+            >
+              Back to login
+            </Link>
           </div>
         </div>
       </div>

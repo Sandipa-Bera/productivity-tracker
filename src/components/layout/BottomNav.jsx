@@ -21,6 +21,7 @@ export default function BottomNav({ onNavigate }) {
           path={item.path}
           collapsed={true}
           onClick={onNavigate}
+          className="flex-1 justify-center"
         />
       ))}
     </nav>

@@ -22,7 +22,7 @@ export default function Sidebar({ collapsed }) {
       {/* Logo / wordmark */}
       <div
         className={[
-          'flex items-center border-b border-[var(--color-border)] py-3',
+          'flex items-center border-b border-[var(--color-border)] py-4',
           collapsed ? 'justify-center px-2' : 'px-4',
         ].join(' ')}
       >
@@ -36,7 +36,7 @@ export default function Sidebar({ collapsed }) {
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
+      <nav className="flex-1 px-2 py-4 space-y-1">
         {NAV_ITEMS.map((item) => (
           <NavItem
             key={item.path}

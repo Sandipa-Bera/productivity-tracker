@@ -1,151 +1,66 @@
-# Productivity
+# 🚀 Personal Productivity Dashboard
 
-A personal productivity workspace for managing tasks, running focused work sessions, tracking daily activity, and measuring progress over time.
+> A full-stack productivity app built to manage tasks, focus sessions, daily activity, goals, and personal journeys — all in one place.
 
-This is a full-stack web application built as part of a 13-step development plan.
-**Current status: Step 4 — Project foundation (routing and layout scaffold).**
+## ✨ Overview
 
----
+I built this project to solve a simple problem:
 
-## Technology Stack
+**Make important work visible, trackable, and harder to procrastinate on.**
 
-| Layer | Technology |
-|---|---|
-| UI | React 19 |
-| Language | JavaScript (ES2022) |
-| Bundler | Vite 8 |
-| Styling | Tailwind CSS v4 |
-| Routing | React Router v7 |
-| Backend/Auth | Supabase |
-| Icons | Lucide React |
-| Charts | Recharts |
-| Linting | ESLint v10 |
+Instead of using separate tools for tasks, study sessions, activity tracking, goals, and progress, this application brings everything together into one personal productivity workspace.
 
 ---
 
-## Getting Started
+## 🎯 Features
 
-### Prerequisites
-
-- Node.js 20+
-- npm 10+
-
-### Install dependencies
-
-```bash
-npm install
-```
-
-### Configure environment variables
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and fill in your Supabase project credentials:
-
-```
-VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-```
-
-> **Never commit `.env` to version control.** It is already listed in `.gitignore`.
-
-### Run locally
-
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`.
-
-### Other commands
-
-```bash
-npm run build    # Production build
-npm run preview  # Preview production build locally
-npm run lint     # Run ESLint
-```
+- 📊 **Personal Dashboard** — See today's tasks, progress, activity, and productivity at a glance.
+- ✅ **Task Management** — Create, organize, prioritize, complete, and track daily tasks.
+- ⏱️ **Focus Timer** — Timestamp-based focus sessions with pause/resume, breaks, notifications, and task association.
+- 🚶 **Activity Tracker** — Track daily steps with a configurable walking goal and weekly history.
+- 🎯 **Goals** — Create personal goals and track progress toward them.
+- 📈 **Progress Analytics** — Monitor study time, completed tasks, focus sessions, walking progress, and streaks.
+- 🪔 **Navratri Journey** — Calendar-based journey tracking with daily progress, countdown, productivity health, and diary notes.
+- 🔐 **Authentication** — Secure signup, login, email verification, password reset, and protected routes.
+- ⚙️ **Personalization** — Theme, font, font size, study goal, step goal, timer preferences, and notifications.
+- 📱 **Responsive & PWA** — Designed for desktop, tablet, and mobile with installable PWA support.
 
 ---
 
-## Environment Variables
+## 🛠️ Tech Stack
 
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_SUPABASE_URL` | ✅ | Your Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | ✅ | Your Supabase project anon (public) key |
+**Frontend**
+- React
+- JavaScript / JSX
+- Vite
+- Tailwind CSS
+- React Router
+- Recharts
 
-> Only the **anon key** should be used in frontend code. Never expose the service-role key.
+**Backend**
+- Supabase
+- PostgreSQL
+- Supabase Authentication
+- Row Level Security (RLS)
 
----
-
-## Project Structure
-
-```
-src/
-  assets/              Static assets
-  components/
-    ui/                Primitive UI components (Button, Input, Card, Badge, ProgressBar, IconButton)
-    layout/            App shell (AppLayout, Sidebar, TopBar, BottomNav, NavItem)
-    shared/            Cross-cutting shared components
-  pages/
-    auth/              Auth pages (Login, Signup, ForgotPassword)
-    DashboardPage.jsx
-    TasksPage.jsx
-    FocusPage.jsx
-    ActivityPage.jsx
-    ProgressPage.jsx
-    HistoryPage.jsx
-    SettingsPage.jsx
-  lib/
-    supabase.js        Supabase client
-  hooks/               Custom React hooks
-  services/            Data/API layer
-  utils/               Pure utility functions
-  constants/
-    navigation.js      Nav items configuration
-    theme.js           Design token constants
-  routes/
-    index.jsx          Route definitions
-    PrivateRoute.jsx   Auth guard (stub — Step 5)
-  App.jsx
-  main.jsx
-  index.css            Tailwind + design tokens
-```
+**Deployment**
+- Vercel
+- Git & GitHub
 
 ---
 
-## Routes
+## 🏗️ Architecture
 
-| Path | Type | Page |
-|---|---|---|
-| `/` | Public | Landing |
-| `/login` | Public | Login |
-| `/signup` | Public | Signup |
-| `/forgot-password` | Public | Forgot Password |
-| `/dashboard` | Private | Dashboard |
-| `/tasks` | Private | Tasks |
-| `/focus` | Private | Focus Timer |
-| `/activity` | Private | Activity |
-| `/progress` | Private | Progress |
-| `/history` | Private | History |
-| `/settings` | Private | Settings |
-
----
-
-## Development Plan
-
-1. Requirements
-2. UI/UX Architecture
-3. Database Architecture
-4. **Project Foundation** ← current step
-5. Authentication
-6. Database Schema
-7. Task Management
-8. Focus Timer
-9. Activity Tracking
-10. Progress & Charts
-11. History
-12. Settings & Preferences
-13. Polish & Deployment
+```text
+React + Vite
+     │
+     ▼
+Supabase
+ ┌───────────────┐
+ │ Authentication│
+ │ PostgreSQL    │
+ │ RLS           │
+ └───────┬───────┘
+         │
+         ▼
+      User Data

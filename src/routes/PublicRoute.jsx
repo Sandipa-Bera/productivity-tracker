@@ -2,13 +2,13 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 /**
- * PrivateRoute — authentication guard for protected routes.
+ * PublicRoute — guard for public-only routes (login, signup).
  * 
  * - Shows loading state while auth is being determined
- * - Redirects to /login if user is not authenticated
- * - Renders children if user is authenticated
+ * - Redirects to /dashboard if user is already authenticated
+ * - Renders children if user is not authenticated
  */
-export default function PrivateRoute({ children }) {
+export default function PublicRoute({ children }) {
   const { user, loading } = useAuth()
 
   if (loading) {
@@ -19,8 +19,8 @@ export default function PrivateRoute({ children }) {
     )
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />
+  if (user) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return children
