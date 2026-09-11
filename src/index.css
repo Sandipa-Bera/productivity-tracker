@@ -1,0 +1,94 @@
+/* Google Fonts — must come before all other rules */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* ─── Design tokens ─────────────────────────────────────────────────────────
+   Declared as CSS custom properties via Tailwind v4's @theme directive.
+   Override with [data-theme="light"] block to enable light mode in a later step.
+   ──────────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Palette */
+  --color-bg:       #0f1115;
+  --color-surface:  #171a21;
+  --color-elevated: #1d2129;
+  --color-border:   #2a2f38;
+  --color-text:     #f1f3f5;
+  --color-muted:    #9aa1ad;
+
+  /* Semantic */
+  --color-accent:   #4f8ef7;
+  --color-danger:   #e05252;
+  --color-success:  #3dba7a;
+  --color-warning:  #d98c3b;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Border radius */
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg: 10px;
+}
+
+/* ─── Light theme override (stub — will be used in a later step) ─────────── */
+[data-theme="light"] {
+  --color-bg:       #f8f9fa;
+  --color-surface:  #ffffff;
+  --color-elevated: #f1f3f5;
+  --color-border:   #dee2e6;
+  --color-text:     #212529;
+  --color-muted:    #6c757d;
+}
+
+/* ─── Base reset & globals ───────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+body {
+  height: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+#root {
+  height: 100%;
+}
+
+/* ─── Focus visible — consistent across browsers ────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ─── Scrollbar — subtle, consistent with dark theme ────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted);
+}
+
+
