@@ -2,6 +2,11 @@
 
 > A full-stack productivity app built to manage tasks, focus sessions, daily activity, goals, and personal journeys — all in one place.
 
+# Live Website
+
+Visit the deployed application here:
+https://productivity-tracker-2hsr.vercel.app/
+
 ## ✨ Overview
 
 I built this project to solve a simple problem:
