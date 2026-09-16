@@ -4,14 +4,6 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 
-const categories = [
-  { value: 'data_science', label: 'Data Science' },
-  { value: 'college', label: 'College' },
-  { value: 'project', label: 'Project' },
-  { value: 'government_exam', label: 'Government Exam' },
-  { value: 'other', label: 'Other' },
-]
-
 const priorities = ['low', 'medium', 'high']
 
 const emptyForm = {
@@ -25,6 +17,7 @@ const emptyForm = {
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([])
+  const [categories, setCategories] = useState([])
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -32,6 +25,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     loadTasks()
+    loadCategories()
   }, [])
 
   async function loadTasks() {
@@ -61,6 +55,24 @@ export default function TasksPage() {
     }
 
     setLoading(false)
+  }
+
+  async function loadCategories() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('name', { ascending: true })
+
+    if (!error && data) {
+      setCategories(data)
+    }
   }
 
   function handleChange(event) {
@@ -166,10 +178,13 @@ export default function TasksPage() {
   }
 
   function categoryLabel(value) {
-    return (
-      categories.find((category) => category.value === value)?.label ||
-      value
-    )
+    const category = categories.find((cat) => cat.slug === value)
+    return category?.name || value
+  }
+
+  function categoryColor(value) {
+    const category = categories.find((cat) => cat.slug === value)
+    return category?.color || '#6366f1'
   }
 
   return (
@@ -230,8 +245,8 @@ export default function TasksPage() {
                 className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm outline-none"
               >
                 {categories.map((category) => (
-                  <option key={category.value} value={category.value}>
-                    {category.label}
+                  <option key={category.id} value={category.slug}>
+                    {category.name}
                   </option>
                 ))}
               </select>

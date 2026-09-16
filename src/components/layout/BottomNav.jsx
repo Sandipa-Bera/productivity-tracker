@@ -11,7 +11,19 @@ export default function BottomNav({ onNavigate }) {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--color-border)] bg-[var(--color-surface)]"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        display: 'flex',
+        alignItems: 'stretch',
+        background: 'var(--surface)',
+        borderTop: '1px solid var(--border-light)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+      className="bottom-nav-mobile"
     >
       {NAV_ITEMS.map((item) => (
         <NavItem
@@ -21,7 +33,7 @@ export default function BottomNav({ onNavigate }) {
           path={item.path}
           collapsed={true}
           onClick={onNavigate}
-          className="flex-1 justify-center"
+          isBottomNav={true}
         />
       ))}
     </nav>

@@ -75,6 +75,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ── Aliases so layout components using --color-* names work correctly ── */
+  --color-bg:       var(--bg);
+  --color-surface:  var(--surface);
+  --color-elevated: var(--surface-2);
+  --color-border:   var(--border);
+  --color-text:     var(--text);
+  --color-muted:    var(--text-muted);
+  --color-accent:   var(--blue);
 }
 
 
@@ -706,5 +715,56 @@ main .grid > * {
 
   .settings-select {
     width: 100%;
+  }
+}
+
+
+/* =========================================================
+   LAYOUT SHELL — RESPONSIVE RULES
+   ========================================================= */
+
+/*
+  Sidebar: only visible on md+ (>= 768px).
+  We use a class instead of Tailwind because our components
+  now use inline styles + this class for the display toggle.
+*/
+.sidebar-desktop {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .sidebar-desktop {
+    display: flex !important;
+  }
+}
+
+/*
+  Bottom nav: only visible on mobile (< 768px).
+*/
+.bottom-nav-mobile {
+  display: flex !important;
+}
+
+@media (min-width: 768px) {
+  .bottom-nav-mobile {
+    display: none !important;
+  }
+}
+
+/*
+  Main content: on mobile, account for the fixed bottom nav.
+*/
+@media (max-width: 767px) {
+  #main-content {
+    padding-bottom: 80px !important;
+  }
+}
+
+/*
+  TopBar user name: hide on very small screens to save space.
+*/
+@media (max-width: 480px) {
+  .user-name-hide-mobile {
+    display: none !important;
   }
 }

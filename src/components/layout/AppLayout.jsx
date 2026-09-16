@@ -18,12 +18,10 @@ import { BREAKPOINTS } from '../../constants/theme'
 export default function AppLayout({ children }) {
   const location = useLocation()
 
-  // On tablet, sidebar collapses by default. On desktop, it's open by default.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => window.innerWidth < BREAKPOINTS.tablet
   )
 
-  // Collapse sidebar automatically when viewport drops below desktop
   useEffect(() => {
     function handleResize() {
       if (window.innerWidth >= BREAKPOINTS.tablet) {
@@ -40,17 +38,23 @@ export default function AppLayout({ children }) {
     setSidebarCollapsed((prev) => !prev)
   }
 
-  // Derive current page title from nav items
   const currentNav = NAV_ITEMS.find((item) => item.path === location.pathname)
   const pageTitle = currentNav?.label ?? ''
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--color-bg)]">
+    <div
+      style={{
+        display: 'flex',
+        height: '100vh',
+        overflow: 'hidden',
+        background: 'var(--bg)',
+      }}
+    >
       {/* Desktop/tablet sidebar */}
       <Sidebar collapsed={sidebarCollapsed} />
 
       {/* Right-side column: topbar + scrollable content */}
-      <div className="flex flex-1 flex-col min-w-0">
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
         <TopBar
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
@@ -60,7 +64,11 @@ export default function AppLayout({ children }) {
         {/* Main content area */}
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto px-6 py-6 pb-24 md:px-8 md:py-8 md:pb-8"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '28px 28px 100px',
+          }}
         >
           {children}
         </main>
