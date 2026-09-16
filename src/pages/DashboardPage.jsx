@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Card from '../components/ui/Card'
 import ProgressBar from '../components/ui/ProgressBar'
@@ -205,26 +206,26 @@ export default function DashboardPage() {
         <h2 className="text-lg font-semibold">Quick actions</h2>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <a
-            href="/tasks"
+          <Link
+            to="/tasks"
             className="rounded-lg border border-gray-700 px-4 py-2.5 text-sm transition hover:bg-gray-800"
           >
             Add task
-          </a>
+          </Link>
 
-          <a
-            href="/focus"
+          <Link
+            to="/focus"
             className="rounded-lg border border-gray-700 px-4 py-2.5 text-sm transition hover:bg-gray-800"
           >
             Start focus
-          </a>
+          </Link>
 
-          <a
-            href="/activity"
+          <Link
+            to="/activity"
             className="rounded-lg border border-gray-700 px-4 py-2.5 text-sm transition hover:bg-gray-800"
           >
             Update steps
-          </a>
+          </Link>
         </div>
       </Card>
     </div>
