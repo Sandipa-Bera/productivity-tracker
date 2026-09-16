@@ -1,7 +1,6 @@
-import { Menu, X, LogOut, User } from 'lucide-react'
+import { Menu, LogOut, User, ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import IconButton from '../ui/IconButton'
 import { useAuth } from '../../hooks/useAuth'
 
 /**
@@ -14,7 +13,6 @@ export default function TopBar({ sidebarCollapsed, onToggleSidebar, title }) {
   const { user, signOut } = useAuth()
   const [showConfirm, setShowConfirm] = useState(false)
 
-  // Called only after the user confirms
   const handleLogout = async () => {
     setShowConfirm(false)
     try {
@@ -29,37 +27,155 @@ export default function TopBar({ sidebarCollapsed, onToggleSidebar, title }) {
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-0 h-12 flex-shrink-0">
-        {/* Sidebar toggle — visible on md+; hamburger on mobile */}
-        <IconButton
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          height: 52,
+          flexShrink: 0,
+          padding: '0 16px',
+          background: 'var(--surface)',
+          borderBottom: '1px solid var(--border-light)',
+        }}
+      >
+        {/* Sidebar toggle button */}
+        <button
+          type="button"
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           onClick={onToggleSidebar}
-          size="sm"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            border: '1px solid var(--border-light)',
+            background: 'transparent',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'background 120ms ease, color 120ms ease, border-color 120ms ease',
+            flexShrink: 0,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--surface-2)'
+            e.currentTarget.style.color = 'var(--text)'
+            e.currentTarget.style.borderColor = 'var(--border)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = 'var(--text-muted)'
+            e.currentTarget.style.borderColor = 'var(--border-light)'
+          }}
         >
-          {sidebarCollapsed ? <Menu size={16} /> : <X size={16} className="hidden md:block" />}
-          <Menu size={16} className="md:hidden" />
-        </IconButton>
+          {sidebarCollapsed ? <Menu size={15} /> : <ChevronLeft size={15} />}
+        </button>
 
+        {/* Page title */}
         {title && (
-          <h2 className="text-sm font-medium text-[var(--color-text)] truncate">{title}</h2>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--text)',
+              letterSpacing: '-0.01em',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {title}
+          </h2>
         )}
 
-        {/* User info and logout */}
-        <div className="ml-auto flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--color-elevated)] border border-[var(--color-border)]">
-            <User size={14} className="text-[var(--color-muted)]" />
-            <span className="text-sm text-[var(--color-text)] truncate max-w-[150px]">
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* User info chip */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '5px 10px 5px 8px',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 8,
+              cursor: 'default',
+            }}
+          >
+            <div
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: 'var(--blue-soft)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <User size={12} style={{ color: 'var(--blue)' }} />
+            </div>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--text)',
+                maxWidth: 140,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              className="user-name-hide-mobile"
+            >
               {userDisplayName}
             </span>
           </div>
-          <IconButton
+
+          {/* Logout button */}
+          <button
+            type="button"
             aria-label="Logout"
+            title="Sign out"
             onClick={() => setShowConfirm(true)}
-            size="sm"
-            title="Logout"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: '1px solid var(--border-light)',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'background 120ms ease, color 120ms ease, border-color 120ms ease',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--red-soft)'
+              e.currentTarget.style.color = 'var(--red)'
+              e.currentTarget.style.borderColor = 'var(--red)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = 'var(--text-muted)'
+              e.currentTarget.style.borderColor = 'var(--border-light)'
+            }}
           >
-            <LogOut size={16} />
-          </IconButton>
+            <LogOut size={14} />
+          </button>
         </div>
       </header>
 
@@ -74,8 +190,9 @@ export default function TopBar({ sidebarCollapsed, onToggleSidebar, title }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.6)',
-            padding: '16px',
+            background: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(2px)',
+            padding: 16,
           }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowConfirm(false) }}
           onKeyDown={(e) => { if (e.key === 'Escape') setShowConfirm(false) }}
@@ -88,40 +205,43 @@ export default function TopBar({ sidebarCollapsed, onToggleSidebar, title }) {
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
-              borderRadius: '12px',
-              padding: '24px',
+              borderRadius: 14,
+              padding: '28px 24px 24px',
               width: '100%',
-              maxWidth: '400px',
+              maxWidth: 400,
               boxShadow: 'var(--shadow-md)',
             }}
           >
             <h2
               id="signout-dialog-title"
-              style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--text)' }}
+              style={{ margin: 0, fontSize: 16, fontWeight: 650, color: 'var(--text)', letterSpacing: '-0.02em' }}
             >
-              Are you sure you want to sign out?
+              Sign out?
             </h2>
             <p
               id="signout-dialog-desc"
               style={{ margin: '10px 0 0', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}
             >
-              You will need to log in again to access your productivity workspace.
+              You'll need to log in again to access your workspace.
             </p>
 
-            <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 24, justifyContent: 'flex-end' }}>
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
                 style={{
                   padding: '8px 16px',
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 500,
                   borderRadius: 8,
                   border: '1px solid var(--border)',
                   background: 'var(--surface-2)',
                   color: 'var(--text)',
                   cursor: 'pointer',
+                  transition: 'background 120ms ease',
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-3)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-2)' }}
               >
                 Cancel
               </button>
@@ -130,14 +250,17 @@ export default function TopBar({ sidebarCollapsed, onToggleSidebar, title }) {
                 onClick={handleLogout}
                 style={{
                   padding: '8px 16px',
-                  fontSize: 14,
-                  fontWeight: 500,
+                  fontSize: 13,
+                  fontWeight: 600,
                   borderRadius: 8,
                   border: '1px solid transparent',
                   background: 'var(--red)',
                   color: '#fff',
                   cursor: 'pointer',
+                  transition: 'opacity 120ms ease',
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
               >
                 Sign out
               </button>
