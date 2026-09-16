@@ -5,6 +5,72 @@ import Button from '../components/ui/Button'
 
 const DEFAULT_FOCUS_MINUTES = 50
 const MAX_BREAK_MINUTES = 15
+// Alarm escalation: volume step every N seconds.
+const ALARM_STEP_SECONDS = 5
+const ALARM_VOLUME_START = 0.1   // 10 %
+const ALARM_VOLUME_STEP  = 0.15  // +15 % per step
+const ALARM_VOLUME_MAX   = 1.0   // 100 %
+
+// ─── Alarm pattern generators (each ≤ 5 s long) ─────────────────────────────
+// Return { freq, startOffset, duration, type? } descriptors.
+// Gain is supplied externally via the master GainNode.
+
+function patternUrgentBeep() {
+  // 3 alternating-pitch beeps in ~4.5 s
+  const events = []
+  for (let i = 0; i < 3; i++) {
+    events.push({ freq: i % 2 === 0 ? 1046 : 880, startOffset: i * 1.4, duration: 0.9 })
+  }
+  return events
+}
+
+function patternRisingScale() {
+  // C5 → C6 scale in ~2.8 s
+  const notes = [523, 587, 659, 698, 784, 880, 988, 1047]
+  const events = []
+  notes.forEach((freq, i) => {
+    events.push({ freq, startOffset: i * 0.32, duration: 0.28 })
+  })
+  return events
+}
+
+function patternPulseWave() {
+  // 5 square-wave pulses
+  const events = []
+  for (let i = 0; i < 5; i++) {
+    events.push({ freq: 660, startOffset: i * 0.9, duration: 0.65, type: 'square' })
+  }
+  return events
+}
+
+function patternSOS() {
+  // . . .  _ _ _  . . .  (one full pass ~4.5 s)
+  const dot = 0.18, dash = 0.54, gap = 0.09, lg = 0.36
+  const events = []
+  let t = 0
+  const sym = (len) => { events.push({ freq: 800, startOffset: t, duration: len }); t += len + gap }
+  ;[dot,dot,dot].forEach(sym); t += lg
+  ;[dash,dash,dash].forEach(sym); t += lg
+  ;[dot,dot,dot].forEach(sym)
+  return events
+}
+
+function patternFastPing() {
+  // 10 descending pings
+  const events = []
+  for (let i = 0; i < 10; i++) {
+    events.push({ freq: 1200 - i * 30, startOffset: i * 0.45, duration: 0.2 })
+  }
+  return events
+}
+
+const ALARM_PATTERNS = [
+  patternUrgentBeep,
+  patternRisingScale,
+  patternPulseWave,
+  patternSOS,
+  patternFastPing,
+]
 
 export default function FocusPage() {
   const [tasks, setTasks] = useState([])
@@ -20,9 +86,16 @@ export default function FocusPage() {
   const [elapsedBeforePause, setElapsedBeforePause] = useState(0)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [error, setError] = useState('')
+  const [alarmActive, setAlarmActive] = useState(false)
+  const [completedSessionType, setCompletedSessionType] = useState('focus')
+  const [alarmVolumePct, setAlarmVolumePct] = useState(ALARM_VOLUME_START)
 
   const audioContextRef = useRef(null)
   const finishingRef = useRef(false)
+  const alarmNodesRef  = useRef([])          // active oscillators
+  const masterGainRef  = useRef(null)        // shared GainNode
+  const alarmIntervalRef = useRef(null)      // setInterval handle
+  const alarmVolumeRef   = useRef(ALARM_VOLUME_START) // current volume (0-1)
 
   useEffect(() => {
     loadTasks()
@@ -123,51 +196,100 @@ export default function FocusPage() {
     }
   }
 
-  // Play a simple built-in alarm using Web Audio API.
+  // Stop all oscillators, clear the interval, disconnect the master gain.
+  function stopAlarm() {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current)
+      alarmIntervalRef.current = null
+    }
+    alarmNodesRef.current.forEach((node) => {
+      try { node.stop() } catch { /* already finished */ }
+    })
+    alarmNodesRef.current = []
+    if (masterGainRef.current) {
+      try { masterGainRef.current.disconnect() } catch { /* ok */ }
+      masterGainRef.current = null
+    }
+    alarmVolumeRef.current = ALARM_VOLUME_START
+    setAlarmVolumePct(ALARM_VOLUME_START)
+    setAlarmActive(false)
+  }
+
+  // Schedule one 5-second batch of oscillators through the master gain.
+  function scheduleAlarmBatch(audioContext, masterGain, patternFn) {
+    const now = audioContext.currentTime
+    const vol = alarmVolumeRef.current
+    const events = patternFn()
+    const nodes = []
+
+    events.forEach(({ freq, startOffset, duration, type = 'sine' }) => {
+      if (startOffset >= ALARM_STEP_SECONDS) return
+
+      const osc  = audioContext.createOscillator()
+      const gain = audioContext.createGain()
+
+      osc.type = type
+      osc.frequency.setValueAtTime(freq, now + startOffset)
+
+      // Per-note envelope (relative — master gain controls overall loudness)
+      gain.gain.setValueAtTime(0.0001, now + startOffset)
+      gain.gain.exponentialRampToValueAtTime(vol, now + startOffset + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + duration)
+
+      osc.connect(gain)
+      gain.connect(masterGain)
+
+      osc.start(now + startOffset)
+      osc.stop(now + startOffset + duration + 0.05)
+      nodes.push(osc)
+    })
+
+    // Replace tracked nodes (old ones have already stopped by the time next batch fires)
+    alarmNodesRef.current = nodes
+  }
+
+  // Start the looping, escalating alarm (runs until stopAlarm() is called).
   function playAlarm() {
     try {
       const audioContext = audioContextRef.current
-
       if (!audioContext) return
+      if (audioContext.state === 'suspended') audioContext.resume()
 
-      if (audioContext.state === 'suspended') {
-        audioContext.resume()
-      }
+      // Create a master gain node that we'll ramp up over time.
+      const masterGain = audioContext.createGain()
+      masterGain.gain.setValueAtTime(ALARM_VOLUME_START, audioContext.currentTime)
+      masterGain.connect(audioContext.destination)
+      masterGainRef.current = masterGain
 
-      const now = audioContext.currentTime
+      // Reset volume tracking.
+      alarmVolumeRef.current = ALARM_VOLUME_START
+      setAlarmVolumePct(ALARM_VOLUME_START)
 
-      // Three short beeps.
-      ;[0, 0.45, 0.9].forEach((offset) => {
-        const oscillator = audioContext.createOscillator()
-        const gain = audioContext.createGain()
+      // Pick one random pattern for the whole session.
+      const patternFn = ALARM_PATTERNS[Math.floor(Math.random() * ALARM_PATTERNS.length)]
 
-        oscillator.type = 'sine'
-        oscillator.frequency.setValueAtTime(
-          880,
-          now + offset
-        )
+      // Play first batch immediately.
+      scheduleAlarmBatch(audioContext, masterGain, patternFn)
+      setAlarmActive(true)
 
-        gain.gain.setValueAtTime(
-          0.0001,
-          now + offset
-        )
+      // Every ALARM_STEP_SECONDS: schedule next batch + raise volume.
+      alarmIntervalRef.current = setInterval(() => {
+        // Escalate volume.
+        const next = Math.min(alarmVolumeRef.current + ALARM_VOLUME_STEP, ALARM_VOLUME_MAX)
+        alarmVolumeRef.current = next
+        setAlarmVolumePct(next)
 
-        gain.gain.exponentialRampToValueAtTime(
-          0.3,
-          now + offset + 0.02
-        )
+        // Update master gain smoothly.
+        if (masterGainRef.current) {
+          masterGainRef.current.gain.linearRampToValueAtTime(
+            next,
+            audioContext.currentTime + 0.5
+          )
+        }
 
-        gain.gain.exponentialRampToValueAtTime(
-          0.0001,
-          now + offset + 0.25
-        )
-
-        oscillator.connect(gain)
-        gain.connect(audioContext.destination)
-
-        oscillator.start(now + offset)
-        oscillator.stop(now + offset + 0.3)
-      })
+        // Schedule next batch.
+        scheduleAlarmBatch(audioContext, masterGain, patternFn)
+      }, ALARM_STEP_SECONDS * 1000)
     } catch {
       // Ignore audio errors so the session can still be saved.
     }
@@ -291,6 +413,9 @@ export default function FocusPage() {
       return
     }
 
+    // 🔔 Remember session type for the alarm overlay label
+    setCompletedSessionType(sessionType)
+
     // 🔔 Alarm
     playAlarm()
 
@@ -346,6 +471,111 @@ export default function FocusPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {/* ── Alarm overlay ── */}
+      {alarmActive && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '2.5rem 3rem',
+              borderRadius: '1.25rem',
+              background: 'linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 0 60px rgba(99,102,241,0.45), 0 0 120px rgba(99,102,241,0.2)',
+              maxWidth: '380px',
+              width: '90vw',
+              animation: 'alarmPulse 1s ease-in-out infinite',
+            }}
+          >
+            <div style={{ fontSize: '4rem', lineHeight: 1, marginBottom: '0.5rem' }}>
+              {completedSessionType === 'focus' ? '🎯' : '☕'}
+            </div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fff', marginBottom: '0.5rem' }}>
+              {completedSessionType === 'focus' ? 'Focus Complete!' : 'Break Over!'}
+            </h2>
+            <p style={{ color: '#a5b4fc', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+              {completedSessionType === 'focus'
+                ? 'Great work! Time to take a well-earned break.'
+                : 'Ready to dive back in? Let\'s go!'}
+            </p>
+
+            {/* Volume escalation bar */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>🔊 Volume</span>
+                <span style={{ fontSize: '0.75rem', color: '#c4b5fd', fontWeight: 600 }}>
+                  {Math.round(alarmVolumePct * 100)}%
+                </span>
+              </div>
+              <div style={{
+                height: '8px',
+                borderRadius: '999px',
+                background: 'rgba(255,255,255,0.08)',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${alarmVolumePct * 100}%`,
+                  borderRadius: '999px',
+                  background: alarmVolumePct >= 0.8
+                    ? 'linear-gradient(90deg,#f97316,#ef4444)'
+                    : alarmVolumePct >= 0.5
+                    ? 'linear-gradient(90deg,#eab308,#f97316)'
+                    : 'linear-gradient(90deg,#6366f1,#8b5cf6)',
+                  transition: 'width 0.5s ease, background 0.5s ease',
+                }} />
+              </div>
+              <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.35rem' }}>
+                Rises every {ALARM_STEP_SECONDS}s until you stop it
+              </p>
+            </div>
+            <button
+              id="stop-alarm-btn"
+              onClick={stopAlarm}
+              style={{
+                padding: '0.75rem 2.5rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderRadius: '9999px',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'linear-gradient(90deg,#6366f1,#8b5cf6)',
+                color: '#fff',
+                boxShadow: '0 0 24px rgba(99,102,241,0.6)',
+                transition: 'transform 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.06)'
+                e.currentTarget.style.boxShadow = '0 0 36px rgba(99,102,241,0.85)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = '0 0 24px rgba(99,102,241,0.6)'
+              }}
+            >
+              🔕 Stop Alarm
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Keyframes injected once */}
+      <style>{`
+        @keyframes alarmPulse {
+          0%, 100% { box-shadow: 0 0 60px rgba(99,102,241,0.45), 0 0 120px rgba(99,102,241,0.2); }
+          50%       { box-shadow: 0 0 90px rgba(139,92,246,0.7),  0 0 180px rgba(139,92,246,0.35); }
+        }
+      `}</style>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">
