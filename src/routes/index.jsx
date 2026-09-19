@@ -12,6 +12,7 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage'
 // Private pages
 import DashboardPage from '../pages/DashboardPage'
 import TasksPage from '../pages/TasksPage'
+import PenaltyPage from '../pages/PenaltyPage'
 import FocusPage from '../pages/FocusPage'
 import ActivityPage from '../pages/ActivityPage'
 import ProgressPage from '../pages/ProgressPage'
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
   // ── Private (wrapped in AppLayout + PrivateRoute) ──
   { path: '/dashboard', element: privateRoute(<DashboardPage />) },
   { path: '/tasks', element: privateRoute(<TasksPage />) },
+  { path: '/penalties', element: privateRoute(<PenaltyPage />) },
   { path: '/focus', element: privateRoute(<FocusPage />) },
   { path: '/activity', element: privateRoute(<ActivityPage />) },
   { path: '/progress', element: privateRoute(<ProgressPage />) },
